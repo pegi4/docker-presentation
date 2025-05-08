@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>VitoSenic - Docker Presentation</title>
+
+		<link rel="stylesheet" href="dist/reset.css">
+		<link rel="stylesheet" href="dist/reveal.css">
+		<link rel="stylesheet" href="dist/theme/black.css">
+
+		<!-- Theme used for syntax highlighted code -->
+		<link rel="stylesheet" href="plugin/highlight/monokai.css">
+		<link rel="icon" type="image/x-icon" href="images/docker-mark-blue.svg">
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h3>Kaj je <span style="color: #007bff;">Docker</span> in zakaj ga uporabljamo?</h3>
+					<img src="images/docker-logo-blue.png" alt="Docker Logo" style="width: 300px; display: block; margin: 30px auto;">
+					<p style="margin-top: 30px;">
+						<small>Vito Senič - FERI 2025</small>
+					</p>
+				</section>
+
+				<section>
+					<h2>Kaj je Docker?</h2>
+					<ul>
+						<li>Rešitev za: "Dela na mojem računalniku"</li>
+						<li>PaaS (Platform as a Service)</li>
+						<li>Platforma za razvoj, pošiljanje in zagon aplikacij</li>
+						<li>Izolacija aplikacij v kontejnerjih</li>
+						<li>Standardizacija okolja</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Ozadje Dockerja</h2>
+					<div style="display: flex; justify-content: space-between; align-items: center;">
+						<div style="flex: 1; padding-right: 20px;">
+							<ul style="font-size: 0.5em;">
+								<li>Prvi osnutki že nastali leta 2010 (Y Combinator) uradno izdan 2013 (Solomon Hykes)</li>
+								<li>Temelji na Linux funkcionalnostih:
+									<ul>
+										<li><strong>cgroups</strong> – omejevanje porabe CPU, RAM, itd.</li>
+										<li><strong>namespaces</strong> – izolacija procesov (PID, mreža, datotečni sistem...)</li>
+										<li><strong>netlink</strong> – komunikacija z jedrom (omrežne nastavitve)</li>
+									</ul>
+								</li>
+								<li>libcontainer - privzeti runtime</li>
+								<li>Napisan v Go programskem jeziku</li>
+								<li>Deluje na različnih platformah:
+									<ul>
+										<li><strong>Linux:</strong> nativno</li>
+										<li><strong>Windows/macOS:</strong> prek virtualnega okolja (VM)</li>
+									</ul>
+								</li>
+							</ul>
+						</div>
+						<div style="flex: 1;">
+							<img src="images/Docker Linux Interfaces Diagram.png" alt="Docker Architecture" style="width: 100%; max-width: 500px; display: block; margin: 0 auto;">
+						</div>
+					</div>
+				</section>				
+
+				<section>
+					<h3>Arhitektura</h3>
+					<div style="display: flex; justify-content: space-between; align-items: center;">
+						<div style="flex: 1; padding-right: 20px;">
+							<img src="images/Docker Architecture Diagram 2.png" alt="Docker Architecture" style="width: 100%; max-width: 650px; display: block; margin: 0 auto;">
+						</div>
+						<div style="flex: 1;">
+							<img src="images/Docker Daemon Architecture Diagram.png" alt="Docker Architecture" style="width: 100%; max-width: 650px; display: block; margin: 0 auto;">
+						</div>
+					</div>
+				</section>				
+
+				<section data-auto-animate>
+					<h3 data-id="code-title">Dockerfile</h3>
+					<pre data-id="code-animation"><code style="font-size: 0.8em;" class="hljs javascript" data-trim data-line-numbers="|1-2|4,5|7,8|10,11|13,14|16,17|19,20|22,23|"><script type="text/template">
+						# Osnovna slika z Node.js
+						FROM node:18
+						
+						# Namesti pnpm globalno
+						RUN corepack enable && corepack prepare pnpm@latest --activate
+						
+						# Nastavi delovno mapo
+						WORKDIR /app
+						
+						# Kopiraj samo package datoteke (pnpm-lock tudi!)
+						COPY package.json pnpm-lock.yaml ./
+						
+						# Namesti odvisnosti
+						RUN pnpm install
+						
+						# Kopiraj ostalo kodo
+						COPY . .
+						
+						# "Dokumentacijsko" označi port – razlaga spodaj
+						EXPOSE 3000
+						
+						# Privzeti ukaz za zagon aplikacije
+						CMD ["pnpm", "start"]						
+					</script></code></pre>
+				</section>			  
+
+				<section data-auto-animate>
+					<h3 data-id="code-title">docker-compose.yml</h3>
+					<pre data-id="code-animation">
+						<code style="font-size: 0.8em; overflow: visible; max-height: none;" class="hljs yaml" data-trim data-line-numbers="|1,18|2,9|3|4-5|6-7|9|10|11-14|15,16,18,19|">
+				<script type="text/template">
+					services:
+					  web:  # Ime naše aplikacije
+						build: .  # Uporabi lokalni Dockerfile
+						ports:
+						  - "5476:3000"  # Zunaj:Znotraj (dostop do aplikacije)
+						depends_on:
+						  - db  # Počakaj, da se najprej zažene baza
+					
+					  db:  # Baza podatkov (PostgreSQL)
+						image: postgres:15  # Uporabi uradni PostgreSQL image
+						environment:  # Spremenljivke za inicializacijo baze
+						  POSTGRES_USER: user
+						  POSTGRES_PASSWORD: secret
+						  POSTGRES_DB: mydb
+						volumes:
+						  - pgdata:/var/lib/postgresql/data  # Shrani podatke zunaj containerja
+					
+					volumes:
+					  pgdata:  # Definicija imenovanega volume-a (brez dodatnih nastavitev)				
+				</script>
+						</code>
+					</pre>
+				</section>				
+
+				<section>
+					<h3>Orkestracija</h3>
+					<div style="display: flex; justify-content: space-between; align-items: center;">
+						<div style="flex: 1; padding-right: 20px; font-size: 0.5em;">
+							<ul>
+							  <li><strong>Zakaj?</strong> Ko imamo več containerjev → potrebujemo nadzor, skaliranje, avtomatizacijo</li>
+							  <li><strong>Docker Swarm</strong> – vgrajena orkestracija v Docker, enostavna za začetek</li>
+							  <li><strong>Kubernetes</strong> – industrijski standard, bolj zmogljiv, kompleksnejši</li>
+							  <li><strong>Vloge v klastru:</strong>
+								<ul>
+								  <li><strong>Manager</strong>: vodi klaster, dodeljuje delo</li>
+								  <li><strong>Worker</strong>: izvaja containerje po navodilih managerja</li>
+								</ul>
+							  </li>
+							  <li><strong>Uporaba:</strong> Skaliranje, load balancing, odpornost na napake</li>
+							</ul>					
+						</div>
+						<div style="flex: 1;">
+							<img src="images/Docker Swarm 1.png" alt="Docker Architecture" style="width: 100%; max-width: 650px; display: block; margin: 0 auto;">
+						</div>
+					</div>
+				</section>
+
+				<section>
+					<h3>Praktični primer</h3>
+					<ul style="font-size: 0.6em;">
+						<li>Next.js aplikacija + PostgreSQL baza</li>
+						<li>Dockerfile za aplikacijo</li>
+						<li>docker-compose za zagon celotnega sistema
+							<ul>
+								<li>Services</li>
+								<li>Volume za podatke, port forwarding za dostop</li>
+							</ul>
+						</li>
+						<li>V prihodnosti: deploy v Docker Swarm ali Kubernetes</li>
+					  </ul>
+				</section>
+
+				<section>
+					<h3>Vprašanja za test</h3>
+					<div style="display: flex; gap: 2rem; justify-content: center; font-size: 0.4em;">
+					  
+					  <!-- Vprašanje 1 -->
+					  <div style="flex: 1;">
+						<p style="color: #d810df;"><strong>1. Kaj je glavni problem, ki ga Docker rešuje?</strong></p>
+						<ul>
+						  <li>A) Povezovanje med bazo in aplikacijo</li>
+						  <li style="color: #00ff6e;">B) “Dela na mojem računalniku, ne pa na tvojem”</li>
+						  <li>C) Prikazovanje podatkov v HTML-ju</li>
+						</ul>
+					  </div>
+				  
+					  <!-- Vprašanje 2 -->
+					  <div style="flex: 1;">
+						<p style="color: #d810df;"><strong>2. Kaj je namen Docker volume-a?</strong></p>
+						<ul>
+						  <li>A) Povečanje hitrosti aplikacije</li>
+						  <li>B) Omogoča zunanji dostop do containera</li>
+						  <li style="color: #00ff6e;">C) Ohranjanje podatkov ob ponovnem zagonu ali izbrisu containerja</li>
+						</ul>
+					  </div>
+				  
+					  <!-- Vprašanje 3 -->
+					  <div style="flex: 1;">
+						<p style="color: #d810df;"><strong>3. Kaj je Dockerfile?</strong></p>
+						<ul>
+						  <li>A) Datoteka za shranjevanje podatkov</li>
+						  <li style="color: #00ff6e;">B) Datoteka, ki vsebuje navodila za ustvarjanje Docker image-a</li>
+						  <li>C) Konfiguracijska datoteka za omrežje containerjev</li>
+						</ul>
+					  </div>
+					</div>
+				</section>									
+
+				<section>
+					<h2>Viri</h2>
+					<ul>
+					  <li><a href="https://docs.docker.com/" target="_blank">Docker uradna dokumentacija</a></li>
+					  <li><a href="https://en.wikipedia.org/wiki/Docker,_Inc." target="_blank">Wikipedia – Docker, Inc.</a></li>
+					  <li><a href="https://en.wikipedia.org/wiki/Docker_(software)" target="_blank">Wikipedia – Docker (software)</a></li>
+					  <li><a href="https://www.blacksmith.sh/blog/docker-architecture-the-components-and-processes-part-1" target="_blank">Docker Architecture – Blacksmith blog</a></li>
+					</ul>
+				  </section>				  
+			</div>
+		</div>
+
+		<script src="dist/reveal.js"></script>
+		<script src="plugin/notes/notes.js"></script>
+		<script src="plugin/markdown/markdown.js"></script>
+		<script src="plugin/highlight/highlight.js"></script>
+		<script>
+			// More info about initialization & config:
+			// - https://revealjs.com/initialization/
+			// - https://revealjs.com/config/
+			Reveal.initialize({
+				hash: true,
+				// Learn about plugins: https://revealjs.com/plugins/
+				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+			});
+		</script>
+	</body>
+</html>
