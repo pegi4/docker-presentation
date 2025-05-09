@@ -161,19 +161,17 @@
 				</section>
 
 				<section>
-					<h3>Praktični primer</h3>
-					<ul style="font-size: 0.6em;">
-						<li>Next.js aplikacija + PostgreSQL baza</li>
-						<li>Dockerfile za aplikacijo</li>
-						<li>docker-compose za zagon celotnega sistema
-							<ul>
-								<li>Services</li>
-								<li>Volume za podatke, port forwarding za dostop</li>
-							</ul>
-						</li>
-						<li>V prihodnosti: deploy v Docker Swarm ali Kubernetes</li>
-					  </ul>
-				</section>
+					<h3>Praktični primer uporabe Dockerja</h3>
+					<ul style="font-size: 0.5em;">
+					  <li><strong>Mikroservisna aplikacija:</strong> 
+						Node.js API, auth servis, worker, Redis, PostgreSQL (dev), Nginx reverse proxy
+					  </li>
+					  <li><strong>Docker Compose:</strong> lokalni razvoj celotnega sistema</li>
+					  <li><strong>Swarm/Kubernetes:</strong> za produkcijsko orkestracijo</li>
+					  <li><strong>V Docker damo:</strong> API-je, workerje, Redis, reverse proxy</li>
+					  <li><strong>Ne damo:</strong> baze v produkciji, frontend na CDN (Next.js → Vercel)</li>
+					</ul>
+				  </section>				  
 
 				<section>
 					<h3>Vprašanja za test</h3>
